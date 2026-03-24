@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EstateHub Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Leaflet Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Poppins,sans-serif}
+body{background:#f1f5f9;color:#333}
+
+header{background:#0f172a;color:#fff;padding:15px 8%;display:flex;justify-content:space-between;align-items:center}
+nav a{color:#fff;margin-left:20px;text-decoration:none;font-size:14px}
+
+.hero{height:70vh;background:url('https://images.unsplash.com/photo-1560518883-ce09059eeffa') center/cover no-repeat;display:flex;align-items:center;justify-content:center;text-align:center}
+.hero h1{color:#fff;font-size:42px;margin-bottom:20px}
+
+.search-box{background:#fff;padding:20px;border-radius:10px;display:flex;gap:10px;box-shadow:0 10px 25px rgba(0,0,0,0.2)}
+.search-box input,.search-box select{padding:10px;border:1px solid #ddd;border-radius:6px}
+.search-box button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer}
+
+.section{padding:60px 8%}
+.section h2{margin-bottom:30px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:25px}
+
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.08);transition:.3s}
+.card:hover{transform:translateY(-6px)}
+
+.card img{width:100%;height:180px;object-fit:cover}
+.card-body{padding:15px}
+.price{color:#2563eb;font-weight:600;margin-bottom:5px}
+.location{font-size:13px;color:#777}
+
+.btn{background:#2563eb;color:#fff;padding:10px 16px;border:none;border-radius:6px;cursor:pointer;margin-top:10px}
+
+.form{max-width:600px;margin:auto;background:#fff;padding:30px;border-radius:10px;box-shadow:0 10px 25px rgba(0,0,0,0.1)}
+.form input,.form textarea{width:100%;padding:10px;margin:10px 0;border:1px solid #ddd;border-radius:6px}
+
+#map{height:300px;border-radius:8px;margin-top:10px}
+
+.agent{background:#fff;padding:20px;border-radius:10px;text-align:center;box-shadow:0 10px 20px rgba(0,0,0,0.08)}
+.agent img{width:90px;height:90px;border-radius:50%;margin-bottom:10px}
+
+.favorite{float:right;cursor:pointer;font-size:18px}
+
+footer{background:#0f172a;color:#fff;text-align:center;padding:20px;margin-top:40px}
+
+.page{display:none}
+.page.active{display:block}
+
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center}
+.modal-content{background:#fff;padding:30px;border-radius:10px;max-width:500px;width:90%}
+
+</style>
+</head>
+<body>
+
+<header>
+<h2>EstateHub</h2>
+<nav>
+<a href="#" onclick="showPage('home')">Home</a>
+<a href="#" onclick="showPage('properties')">Properties</a>
+<a href="#" onclick="showPage('agents')">Agents</a>
+<a href="#" onclick="showPage('favorites')">Favorites</a>
+<a href="#" onclick="showPage('add')">Add Property</a>
+<a href="#" onclick="showPage('contact')">Contact</a>
+</nav>
+</header>
+
+<section id="home" class="page active">
+<div class="hero">
+<div>
+<h1>Find Your Dream Home</h1>
+<div class="search-box">
+<input type="text" id="search" placeholder="City">
+<select id="type">
+<option value="">Type</option>
+<option>House</option>
+<option>Apartment</option>
+<option>Villa</option>
+</select>
+<button onclick="searchProperty()">Search</button>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Featured Properties</h2>
+<div class="grid" id="featured"></div>
+</div>
+</section>
+
+<section id="properties" class="page section">
+<h2>All Properties</h2>
+<div class="grid" id="propertyList"></div>
+</section>
+
+<section id="favorites" class="page section">
+<h2>Favorite Properties</h2>
+<div class="grid" id="favoriteList"></div>
+</section>
+
+<section id="agents" class="page section">
+<h2>Our Agents</h2>
+<div class="grid">
+<div class="agent">
+<img src="https://randomuser.me/api/portraits/men/32.jpg">
+<h3>John Smith</h3>
+<p>Senior Property Agent</p>
+</div>
+<div class="agent">
+<img src="https://randomuser.me/api/portraits/women/44.jpg">
+<h3>Sarah Khan</h3>
+<p>Luxury Home Specialist</p>
+</div>
+<div class="agent">
+<img src="https://randomuser.me/api/portraits/men/76.jpg">
+<h3>David Lee</h3>
+<p>Commercial Property Expert</p>
+</div>
+</div>
+</section>
+
+<section id="add" class="page section">
+<h2>Add Property</h2>
+<div class="form">
+<input type="text" id="title" placeholder="Property title">
+<input type="number" id="price" placeholder="Price">
+<input type="text" id="location" placeholder="Location name">
+
+<label><b>Upload Property Image</b></label>
+<input type="file" id="imageFile" accept="image/*">
+
+<label><b>Select Location on Map</b></label>
+<div id="map"></div>
+
+<textarea id="description" placeholder="Description"></textarea>
+<button class="btn" onclick="addProperty()">Add Property</button>
+</div>
+</section>
+
+<section id="contact" class="page section">
+<h2>Contact</h2>
+<div class="form">
+<input type="text" placeholder="Name">
+<input type="email" placeholder="Email">
+<textarea placeholder="Message"></textarea>
+<button class="btn">Send</button>
+</div>
+</section>
+
+<div class="modal" id="modal">
+<div class="modal-content" id="modalContent"></div>
+</div>
+
+<footer>
+<p>© 2026 EstateHub Pro</p>
+</footer>
+
+<script>
+let properties=JSON.parse(localStorage.getItem('properties'))||[];
+let favorites=JSON.parse(localStorage.getItem('favorites'))||[];
+let selectedCoords=null;
+
+function showPage(id){
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+ setTimeout(initMap,100);
+}
+
+function displayProperties(list,id){
+ const container=document.getElementById(id);
+ if(!container) return;
+ container.innerHTML="";
+ list.forEach((p,i)=>{
+ container.innerHTML+=`<div class="card">
+ <img src="${p.img}">
+ <div class="card-body">
+ <span class="favorite" onclick="addFavorite(${i})">❤</span>
+ <div class="price">$${p.price}</div>
+ <h3>${p.title}</h3>
+ <div class="location">${p.location}</div>
+ <button class="btn" onclick="viewProperty(${i})">View</button>
+ </div>
+ </div>`;
+ });
+}
+
+function viewProperty(i){
+ const p=properties[i];
+ const modal=document.getElementById('modal');
+ const content=document.getElementById('modalContent');
+ content.innerHTML=`<h2>${p.title}</h2>
+ <img src="${p.img}" style="width:100%;margin:10px 0">
+ <p><b>Price:</b> $${p.price}</p>
+ <p><b>Location:</b> ${p.location}</p>
+ ${p.coords?`<p><b>Coordinates:</b> ${p.coords.lat.toFixed(4)}, ${p.coords.lng.toFixed(4)}</p>`:''}`;
+ modal.style.display="flex";
+ modal.onclick=()=>modal.style.display="none";
+}
+
+function searchProperty(){
+ const search=document.getElementById('search').value.toLowerCase();
+ const filtered=properties.filter(p=>p.location.toLowerCase().includes(search)||search=="");
+ displayProperties(filtered,'propertyList');
+ showPage('properties');
+}
+
+function addProperty(){
+ const title=document.getElementById('title').value;
+ const price=document.getElementById('price').value;
+ const location=document.getElementById('location').value;
+ const file=document.getElementById('imageFile').files[0];
+
+ if(!file){alert('Please upload image');return}
+
+ const reader=new FileReader();
+ reader.onload=function(e){
+  const img=e.target.result;
+
+  properties.push({title,price,location,img,coords:selectedCoords});
+  localStorage.setItem('properties',JSON.stringify(properties));
+
+  alert('Property Added Successfully');
+
+  displayProperties(properties,'propertyList');
+  showPage('properties');
+ }
+ reader.readAsDataURL(file);
+}
+
+function addFavorite(i){
+ favorites.push(properties[i]);
+ localStorage.setItem('favorites',JSON.stringify(favorites));
+ displayFavorites();
+}
+
+function displayFavorites(){
+ displayProperties(favorites,'favoriteList');
+}
+
+function initMap(){
+ if(!document.getElementById('map')) return;
+
+ if(window.mapInstance) return;
+
+ const map=L.map('map').setView([31.5,74.3],6);
+ window.mapInstance=map;
+
+ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+ maxZoom:19
+ }).addTo(map);
+
+ let marker;
+
+ map.on('click',function(e){
+  selectedCoords=e.latlng;
+
+  if(marker) map.removeLayer(marker);
+
+  marker=L.marker(e.latlng).addTo(map);
+ });
+}
+
+displayProperties(properties,'propertyList');
+displayProperties(properties,'featured');
+displayFavorites();
+</script>
+
+</body>
+</html>
